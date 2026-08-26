@@ -7,7 +7,6 @@ from google.genai import types
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
 
-# Secrets check and API Key initialization
 api_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
@@ -31,12 +30,11 @@ RULES:
 3. Provide itemized total bill and a pickup token (#CB-XXX) upon confirmation.
 """
 
-# Re-create client safely to prevent session leaks
 client = genai.Client(api_key=api_key)
 
 if "chat" not in st.session_state:
     st.session_state.chat = client.chats.create(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.2
