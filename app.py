@@ -1,20 +1,23 @@
 import streamlit as st
 import json
 import os
-from google import genai
+import google.generativeai as genai
 
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
 
-# Key fetch + auto-clean logic (AQ. prefix auto-remove hoga)
-raw_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
+# Key extraction & cleaning
+raw_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
 
 if not raw_key:
     st.error("GEMINI_API_KEY missing! Please add it in Streamlit Secrets.")
     st.stop()
 
-# Safely extract valid AIz key string
+# Extract pure AIz key part if extra prefix exists
 api_key = raw_key[raw_key.find("AIz"):] if "AIz" in raw_key else raw_key.strip()
+
+# Configure standard generativeai library
+genai.configure(api_key=api_key)
 
 canteen_menu = [
     {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
@@ -46,17 +49,19 @@ if prompt := st.chat_input("Type your order or query here..."):
         st.markdown(prompt)
 
     try:
-        client = genai.Client(api_key=api_key)
-        
-        conversation_context = system_prompt + "\n\nChat History:\n"
-        for msg in st.session_state.messages:
-            role_label = "User" if msg["role"] == "user" else "Assistant"
-            conversation_context += f"{role_label}: {msg['content']}\n"
-        
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=conversation_context
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction=system_prompt
         )
+        
+        # Build history format for google-generativeai
+        history = []
+        for msg in st.session_state.messages[:-1]:
+            role = "user" if msg["role"] == "user" else "model"
+            history.append({"role": role, "parts": [msg["content"]]})
+
+        chat = model.start_chat(history=history)
+        response = chat.send_message(prompt)
 
         with st.chat_message("assistant"):
             st.markdown(response.text)
