@@ -50,7 +50,7 @@ if prompt := st.chat_input("Type your order or query here..."):
             conversation_context += f"{role_label}: {msg['content']}\n"
         
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=conversation_context
         )
 
@@ -59,4 +59,7 @@ if prompt := st.chat_input("Type your order or query here..."):
         st.session_state.messages.append({"role": "assistant", "content": response.text})
 
     except Exception as e:
-        st.error(f"API Error: {str(e)}")
+        if "429" in str(e):
+            st.error("⚠️ Daily quota limit reached! New API key create karke Streamlit Secrets mein update karein.")
+        else:
+            st.error(f"API Error: {str(e)}")
