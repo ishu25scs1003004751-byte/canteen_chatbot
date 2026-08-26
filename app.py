@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import json
 import os
 from google import genai
@@ -30,20 +30,10 @@ RULES:
 3. Provide itemized total bill and a pickup token (#CB-XXX) upon confirmation.
 """
 
-client = genai.Client(api_key=api_key)
-
-if "chat" not in st.session_state:
-    st.session_state.chat = client.chats.create(
-        model="gemini-2.0-flash",
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.2
-        )
-    )
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display previous UI messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -54,9 +44,33 @@ if prompt := st.chat_input("Type your order or query here..."):
         st.markdown(prompt)
 
     try:
-        response = st.session_state.chat.send_message(prompt)
+        # Convert Streamlit message history to GenAI SDK history format
+        history_contents = []
+        for msg in st.session_state.messages[:-1]:
+            role = "user" if msg["role"] == "user" else "model"
+            history_contents.append(
+                types.Content(
+                    role=role,
+                    parts=[types.Part.from_text(text=msg["content"])]
+                )
+            )
+
+        # Fresh client and chat context on every execution (fixes closed client bug)
+        client = genai.Client(api_key=api_key)
+        chat = client.chats.create(
+            model="gemini-2.0-flash",
+            history=history_contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.2
+            )
+        )
+
+        response = chat.send_message(prompt)
+        
         with st.chat_message("assistant"):
             st.markdown(response.text)
         st.session_state.messages.append({"role": "assistant", "content": response.text})
+
     except Exception as e:
         st.error(f"API Error: {str(e)}")
