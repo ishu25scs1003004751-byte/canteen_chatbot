@@ -1,10 +1,18 @@
 import streamlit as st
 import json
+import os
 from google import genai
 from google.genai import types
 
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
+
+# Secrets check and API Key initialization
+api_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
+
+if not api_key:
+    st.error("GEMINI_API_KEY missing! Please add it in Streamlit Secrets.")
+    st.stop()
 
 canteen_menu = [
     {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
@@ -23,11 +31,11 @@ RULES:
 3. Provide itemized total bill and a pickup token (#CB-XXX) upon confirmation.
 """
 
-if "client" not in st.session_state:
-    st.session_state.client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+# Re-create client safely to prevent session leaks
+client = genai.Client(api_key=api_key)
 
 if "chat" not in st.session_state:
-    st.session_state.chat = st.session_state.client.chats.create(
+    st.session_state.chat = client.chats.create(
         model="gemini-2.5-flash",
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
@@ -47,8 +55,10 @@ if prompt := st.chat_input("Type your order or query here..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    response = st.session_state.chat.send_message(prompt)
-    
-    with st.chat_message("assistant"):
-        st.markdown(response.text)
-    st.session_state.messages.append({"role": "assistant", "content": response.text})
+    try:
+        response = st.session_state.chat.send_message(prompt)
+        with st.chat_message("assistant"):
+            st.markdown(response.text)
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
+    except Exception as e:
+        st.error(f"API Error: {str(e)}")
