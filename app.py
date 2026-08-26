@@ -6,11 +6,15 @@ from google import genai
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
 
-api_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
+# Key fetch + auto-clean logic (AQ. prefix auto-remove hoga)
+raw_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
-if not api_key:
+if not raw_key:
     st.error("GEMINI_API_KEY missing! Please add it in Streamlit Secrets.")
     st.stop()
+
+# Safely extract valid AIz key string
+api_key = raw_key[raw_key.find("AIz"):] if "AIz" in raw_key else raw_key.strip()
 
 canteen_menu = [
     {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
@@ -50,7 +54,7 @@ if prompt := st.chat_input("Type your order or query here..."):
             conversation_context += f"{role_label}: {msg['content']}\n"
         
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-2.5-flash",
             contents=conversation_context
         )
 
@@ -59,7 +63,4 @@ if prompt := st.chat_input("Type your order or query here..."):
         st.session_state.messages.append({"role": "assistant", "content": response.text})
 
     except Exception as e:
-        if "429" in str(e):
-            st.error("⚠️ Quota limit reached! Google AI Studio se naya API Key lekar Secrets mein update karein.")
-        else:
-            st.error(f"API Error: {str(e)}")
+        st.error(f"API Error: {str(e)}")
