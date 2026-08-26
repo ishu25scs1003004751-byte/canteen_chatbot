@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import json
 import os
 from google import genai
@@ -7,13 +7,7 @@ from google.genai import types
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
 
-# Updated authentication for OAuth/Access Token keys
-api_key = st.secrets["GEMINI_API_KEY"]
-if api_key.startswith("AQ."):
-    os.environ["GEMINI_BINDING_TOKEN"] = api_key
-    client = genai.Client()
-else:
-    client = genai.Client(api_key=api_key)
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 canteen_menu = [
     {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
