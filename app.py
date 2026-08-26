@@ -1,13 +1,10 @@
-import streamlit as st
+ import streamlit as st
 import json
-import os
 from google import genai
 from google.genai import types
 
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
-
-client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 canteen_menu = [
     {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
@@ -26,8 +23,12 @@ RULES:
 3. Provide itemized total bill and a pickup token (#CB-XXX) upon confirmation.
 """
 
+# Client and Chat Session state preservation fix
+if "client" not in st.session_state:
+    st.session_state.client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+
 if "chat" not in st.session_state:
-    st.session_state.chat = client.chats.create(
+    st.session_state.chat = st.session_state.client.chats.create(
         model="gemini-2.5-flash",
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
@@ -38,15 +39,18 @@ if "chat" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display previous chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# User Input Handling
 if prompt := st.chat_input("Type your order or query here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Sending message via stored session state chat
     response = st.session_state.chat.send_message(prompt)
     
     with st.chat_message("assistant"):
