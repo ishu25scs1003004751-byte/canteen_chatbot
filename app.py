@@ -2,7 +2,6 @@ import streamlit as st
 import json
 import os
 from google import genai
-from google.genai import types
 
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
@@ -33,7 +32,6 @@ RULES:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display previous UI messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -44,30 +42,18 @@ if prompt := st.chat_input("Type your order or query here..."):
         st.markdown(prompt)
 
     try:
-        # Convert Streamlit message history to GenAI SDK history format
-        history_contents = []
-        for msg in st.session_state.messages[:-1]:
-            role = "user" if msg["role"] == "user" else "model"
-            history_contents.append(
-                types.Content(
-                    role=role,
-                    parts=[types.Part.from_text(text=msg["content"])]
-                )
-            )
-
-        # Fresh client and chat context on every execution (fixes closed client bug)
         client = genai.Client(api_key=api_key)
-        chat = client.chats.create(
-            model="gemini-2.0-flash",
-            history=history_contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                temperature=0.2
-            )
+        
+        conversation_context = system_prompt + "\n\nChat History:\n"
+        for msg in st.session_state.messages:
+            role_label = "User" if msg["role"] == "user" else "Assistant"
+            conversation_context += f"{role_label}: {msg['content']}\n"
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=conversation_context
         )
 
-        response = chat.send_message(prompt)
-        
         with st.chat_message("assistant"):
             st.markdown(response.text)
         st.session_state.messages.append({"role": "assistant", "content": response.text})
