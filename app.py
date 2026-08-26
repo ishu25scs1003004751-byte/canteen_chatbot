@@ -50,7 +50,7 @@ if prompt := st.chat_input("Type your order or query here..."):
             conversation_context += f"{role_label}: {msg['content']}\n"
         
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=conversation_context
         )
 
