@@ -6,15 +6,11 @@ import requests
 st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
 st.title("🍔 Campus Bite - Automated Ordering System")
 
-# Extract and clean API Key
-raw_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
+api_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "").strip()
 
-if not raw_key:
+if not api_key:
     st.error("GEMINI_API_KEY missing! Please add it in Streamlit Secrets.")
     st.stop()
-
-# Auto-clean key (extract pure AIz... key if prefixed)
-api_key = raw_key[raw_key.find("AIz"):] if "AIz" in raw_key else raw_key.strip()
 
 canteen_menu = [
     {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
@@ -46,14 +42,12 @@ if prompt := st.chat_input("Type your order or query here..."):
         st.markdown(prompt)
 
     try:
-        # Build contents structure with system instructions & chat history
         contents_payload = [{"role": "user", "parts": [{"text": system_prompt}]}]
-        
         for msg in st.session_state.messages:
             role = "user" if msg["role"] == "user" else "model"
             contents_payload.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-       url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
         headers = {"Content-Type": "application/json"}
         payload = {"contents": contents_payload}
 
