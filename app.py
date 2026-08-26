@@ -53,7 +53,7 @@ if prompt := st.chat_input("Type your order or query here..."):
             role = "user" if msg["role"] == "user" else "model"
             contents_payload.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
         headers = {"Content-Type": "application/json"}
         payload = {"contents": contents_payload}
 
