@@ -50,7 +50,7 @@ if prompt := st.chat_input("Type your order or query here..."):
             conversation_context += f"{role_label}: {msg['content']}\n"
         
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3.6-flash",
             contents=conversation_context
         )
 
@@ -60,6 +60,6 @@ if prompt := st.chat_input("Type your order or query here..."):
 
     except Exception as e:
         if "429" in str(e):
-            st.error("⚠️ Daily quota limit reached! New API key create karke Streamlit Secrets mein update karein.")
+            st.error("⚠️ Quota limit reached! Google AI Studio se naya API Key lekar Secrets mein update karein.")
         else:
             st.error(f"API Error: {str(e)}")
