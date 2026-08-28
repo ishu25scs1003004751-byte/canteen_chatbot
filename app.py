@@ -3,7 +3,7 @@ import json
 import os
 import requests
 
-st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔")
+st.set_page_config(page_title="Campus Bite Canteen Assistant", page_icon="🍔", layout="wide")
 st.title("🍔 Campus Bite - Automated Ordering System")
 
 api_key = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "").strip()
@@ -12,13 +12,58 @@ if not api_key:
     st.error("GEMINI_API_KEY missing! Please add it in Streamlit Secrets.")
     st.stop()
 
+# Updated menu with Image URLs
 canteen_menu = [
-    {"id": 101, "item": "Veg Samosa", "price": 15, "category": "Snacks", "available": True},
-    {"id": 102, "item": "Paneer Patties", "price": 30, "category": "Snacks", "available": True},
-    {"id": 103, "item": "Cold Coffee", "price": 50, "category": "Beverages", "available": True},
-    {"id": 104, "item": "Masala Dosa", "price": 80, "category": "South Indian", "available": False},
-    {"id": 105, "item": "Special Thali", "price": 120, "category": "Meals", "available": True}
+    {
+        "id": 101, 
+        "item": "Veg Samosa", 
+        "price": 15, 
+        "category": "Snacks", 
+        "available": True,
+        "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500"
+    },
+    {
+        "id": 102, 
+        "item": "Paneer Patties", 
+        "price": 30, 
+        "category": "Snacks", 
+        "available": True,
+        "image": "https://images.unsplash.com/photo-1626132647523-66f5bf380027?w=500"
+    },
+    {
+        "id": 103, 
+        "item": "Cold Coffee", 
+        "price": 50, 
+        "category": "Beverages", 
+        "available": True,
+        "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500"
+    },
+    {
+        "id": 104, 
+        "item": "Masala Dosa", 
+        "price": 80, 
+        "category": "South Indian", 
+        "available": False,
+        "image": "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=500"
+    },
+    {
+        "id": 105, 
+        "item": "Special Thali", 
+        "price": 120, 
+        "category": "Meals", 
+        "available": True,
+        "image": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500"
+    }
 ]
+
+# --- SIDEBAR MENU WITH PHOTOS ---
+st.sidebar.title("📜 Campus Bite Menu")
+for item in canteen_menu:
+    status = "✅ Available" if item["available"] else "❌ Out of Stock"
+    st.sidebar.subheader(f"{item['item']} - ₹{item['price']}")
+    st.sidebar.caption(f"Category: {item['category']} | Status: {status}")
+    st.sidebar.image(item["image"], use_container_width=True)
+    st.sidebar.divider()
 
 system_prompt = f"""
 You are the official automated ordering assistant for "Campus Bite" Canteen.
